@@ -1,0 +1,25 @@
+meal_analyzer/
+├── lib/
+│   ├── main.dart
+│   ├── core/
+│   │   ├── constants.dart          # API keys, strings
+│   │   └── theme.dart              # App colors/fonts
+│   ├── data/
+│   │   ├── models/
+│   │   │   └── meal_result.dart    # Data class for AI response
+│   │   ├── services/
+│   │   │   └── claude_service.dart # API call logic
+│   │   └── local/
+│   │       └── hive_service.dart   # Save/load history
+│   ├── providers/
+│   │   ├── meal_provider.dart      # Core state (photo → result)
+│   │   └── history_provider.dart   # History state
+│   └── ui/
+│       ├── screens/
+│       │   ├── home_screen.dart
+│       │   ├── result_screen.dart
+│       │   └── history_screen.dart
+│       └── widgets/
+│           ├── nutrition_card.dart
+│           ├── macro_bar.dart
+│           └── history_tile.dart
