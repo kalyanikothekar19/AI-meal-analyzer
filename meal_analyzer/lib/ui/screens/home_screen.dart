@@ -340,5 +340,4 @@ class _ErrorCard extends StatelessWidget {
       ),
     );
   }
-
 }
