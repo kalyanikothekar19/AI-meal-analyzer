@@ -84,7 +84,7 @@ import '../../core/constants.dart';
 
 class ClaudeService {
   static const _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
 
   Future<MealResult> analyzeMeal(File imageFile) async {
     final bytes = await imageFile.readAsBytes();
@@ -138,11 +138,19 @@ Format:
     final rawText =
         decoded['candidates'][0]['content']['parts'][0]['text'] as String;
 
-    // Clean response in case Gemini adds markdown
-    final cleanText =
-        rawText.replaceAll('```json', '').replaceAll('```', '').trim();
+    final cleanText = rawText
+        .replaceAll(RegExp(r'```json', caseSensitive: false), '')
+        .replaceAll('```', '')
+        .trim();
 
-    final nutritionJson = jsonDecode(cleanText) as Map<String, dynamic>;
+// Try to extract JSON even if there's surrounding text
+    final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanText);
+    if (jsonMatch == null) {
+      throw Exception('No food detected or invalid response from AI.');
+    }
+
+    final nutritionJson =
+        jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
     return MealResult.fromJson(nutritionJson, imageFile.path);
   }
 }

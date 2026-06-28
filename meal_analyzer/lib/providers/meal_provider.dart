@@ -42,7 +42,11 @@ class MealAnalysisNotifier extends AsyncNotifier<MealResult?> {
       final result = await service.analyzeMeal(imageFile);
 
       // Auto-save to history after successful analysis
-      await ref.read(mealHistoryProvider.notifier).addMeal(result);
+      final firestoreService = ref.read(firestoreServiceProvider);
+      await firestoreService.saveMeal(result);
+
+      // Refresh history
+      ref.invalidate(mealHistoryProvider);
 
       return result;
     });

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:meal_analyzer/data/firestore_service.dart';
 import '../data/models/meal_result.dart';
 
 class MealHistoryNotifier extends Notifier<List<MealResult>> {
@@ -25,7 +26,9 @@ class MealHistoryNotifier extends Notifier<List<MealResult>> {
   }
 }
 
-final mealHistoryProvider =
-    NotifierProvider<MealHistoryNotifier, List<MealResult>>(
-  MealHistoryNotifier.new,
-);
+final firestoreServiceProvider = Provider((ref) => FirestoreService());
+
+final mealHistoryProvider = FutureProvider<List<MealResult>>((ref) async {
+  final service = ref.read(firestoreServiceProvider);
+  return service.getMeals();
+});

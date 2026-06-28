@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme.dart';
 import '../../data/models/meal_result.dart';
-import '../../providers/history_provider.dart';
+import '../../providers/history_provider.dart'; // update this to export mealHistoryProvider as FutureProvider
 import '../widgets/history_tile.dart';
 import 'result_screen.dart';
 
@@ -12,84 +12,143 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final history = ref.watch(mealHistoryProvider);
-    final notifier = ref.read(mealHistoryProvider.notifier);
+    // mealHistoryProvider is now a FutureProvider<List<MealResult>>
+    final historyAsync = ref.watch(mealHistoryProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
         title: const Text('History'),
         actions: [
-          if (history.isNotEmpty)
-            TextButton.icon(
-              onPressed: () => _confirmClearAll(context, notifier),
-              icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-              label: const Text('Clear All'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-            ),
+          // Only show Clear All when data is loaded and non-empty
+          historyAsync.maybeWhen(
+            data: (history) => history.isNotEmpty
+                ? TextButton.icon(
+                    onPressed: () => _confirmClearAll(context, ref),
+                    icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+                    label: const Text('Clear All'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  )
+                : const SizedBox.shrink(),
+            orElse: () => const SizedBox.shrink(),
+          ),
         ],
       ),
-      body: history.isEmpty
-          ? const _EmptyState()
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Cumulative stats ────────────────────────────────────────
-                _SummaryBar(history: history),
+      body: historyAsync.when(
+        // ── Loading state ──────────────────────────────────────────────────
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
 
-                // ── Hint ────────────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-                  child: Text(
-                    '${history.length} meal${history.length == 1 ? '' : 's'} '
-                    'analysed  ·  Swipe left to delete',
-                    style: AppTheme.labelSmall,
+        // ── Error state ────────────────────────────────────────────────────
+        error: (err, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_off_rounded,
+                  size: 48, color: Colors.redAccent),
+              const SizedBox(height: 16),
+              Text(
+                'Could not load history',
+                style: AppTheme.headingMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                err.toString(),
+                style: AppTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => ref.invalidate(mealHistoryProvider),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Data loaded ────────────────────────────────────────────────────
+        data: (history) => history.isEmpty
+            ? const _EmptyState()
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Cumulative stats ───────────────────────────────────
+                  _SummaryBar(history: history),
+
+                  // ── Hint ───────────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                    child: Text(
+                      '${history.length} meal${history.length == 1 ? '' : 's'} '
+                      'analysed  ·  Swipe left to delete',
+                      style: AppTheme.labelSmall,
+                    ),
                   ),
-                ),
 
-                // ── Meal list ───────────────────────────────────────────────
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
-                    itemCount: history.length,
-                    itemBuilder: (context, uiIndex) {
-                      final meal = history[uiIndex];
+                  // ── Meal list ──────────────────────────────────────────
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                      itemCount: history.length,
+                      itemBuilder: (context, index) {
+                        final meal = history[index];
 
-                      // UI shows newest first; Hive stores oldest first.
-                      // Convert UI index → Hive index for deletion.
-                      final hiveIndex = history.length - 1 - uiIndex;
-
-                      return GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ResultScreen(meal: meal),
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ResultScreen(meal: meal),
+                            ),
                           ),
-                        ),
-                        child: HistoryTile(
-                          meal: meal,
-                          onDelete: () => notifier.deleteMeal(hiveIndex),
-                        ),
-                      );
-                    },
+                          child: HistoryTile(
+                            meal: meal,
+                            onDelete: () => _deleteMeal(context, ref, meal),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 
-  // ── Confirm dialog before wiping all history ────────────────────────────────
-  void _confirmClearAll(
-      BuildContext context, MealHistoryNotifier notifier) {
+  // ── Delete a single meal using its Firestore document ID ─────────────────
+  Future<void> _deleteMeal(
+      BuildContext context, WidgetRef ref, MealResult meal) async {
+    // firestoreId is stored on the MealResult model (added in Step 6 of migration)
+    if (meal.firestoreId == null) return;
+
+    try {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      await firestoreService.deleteMeal(meal.firestoreId!);
+
+      // Refresh the history list after deletion
+      ref.invalidate(mealHistoryProvider);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── Confirm dialog before wiping all history ──────────────────────────────
+  void _confirmClearAll(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Clear All History?'),
         content: const Text(
-          'This will permanently delete all your saved meals.',
+          'This will permanently delete all your saved meals from the cloud.',
         ),
         actions: [
           TextButton(
@@ -97,9 +156,22 @@ class HistoryScreen extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // notifier.clearAll();
+              try {
+                final firestoreService = ref.read(firestoreServiceProvider);
+                await firestoreService.clearAllMeals();
+                ref.invalidate(mealHistoryProvider);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to clear: $e'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete All'),
@@ -125,9 +197,9 @@ class _SummaryBar extends StatelessWidget {
 
     for (final m in history) {
       totalCalories += m.calories;
-      totalProtein  += m.protein;
-      totalCarbs    += m.carbs;
-      totalFat      += m.fat;
+      totalProtein += m.protein;
+      totalCarbs += m.carbs;
+      totalFat += m.fat;
     }
 
     return Container(

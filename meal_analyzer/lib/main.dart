@@ -38,7 +38,7 @@ class MealAnalyzerApp extends StatelessWidget {
       title: 'Meal Analyzer',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const HomeScreen(),
+      home: const AuthGate(),
       routes: {
         '/history': (_) => const HistoryScreen(),
         '/signup': (_) => const SignupScreen(),

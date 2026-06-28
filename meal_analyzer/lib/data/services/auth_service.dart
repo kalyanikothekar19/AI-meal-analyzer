@@ -23,14 +23,15 @@ class AuthService {
       password: password,
     );
   }
+
   Future<void> sendPasswordReset(String email) async {
-      try {
-        await _auth.sendPasswordResetEmail(email: email.trim());
-      } on FirebaseAuthException catch (e) {
-        // Throw the error message to catch it in the UI
-        throw Exception(e.message ?? 'An unknown error occurred.');
-      }
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      // Throw the error message to catch it in the UI
+      throw Exception(e.message ?? 'An unknown error occurred.');
     }
+  }
   // ── Google Sign-In ────────────────────────────────
 
   Future<UserCredential?> signInWithGoogle() async {
@@ -49,13 +50,14 @@ class AuthService {
   }
 
   // ── Sign Out ──────────────────────────────────────
-Future<UserCredential?>signInwithGoogleWeb()async {
-  GoogleAuthProvider authProvider = GoogleAuthProvider();
-        // signInWithPopup safely manages the browser window and catches closures!
-  return await _auth.signInWithPopup(authProvider); 
-}
+  Future<UserCredential?> signInwithGoogleWeb() async {
+    GoogleAuthProvider authProvider = GoogleAuthProvider();
+    // signInWithPopup safely manages the browser window and catches closures!
+    return await _auth.signInWithPopup(authProvider);
+  }
+
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    // await _googleSignIn.signOut();
     await _auth.signOut();
   }
 }
