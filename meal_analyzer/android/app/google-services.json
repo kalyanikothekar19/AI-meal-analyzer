@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "847779040961",
+    "project_id": "mealanalyzer-6c367",
+    "storage_bucket": "mealanalyzer-6c367.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847779040961:android:469d191ce0edfac1f94e40",
+        "android_client_info": {
+          "package_name": "com.example.meal_analyzer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmbisAimbIbJZz2POtNUsMQLy3gM3hgpg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

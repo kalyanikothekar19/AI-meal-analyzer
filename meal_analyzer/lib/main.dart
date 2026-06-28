@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:meal_analyzer/ui/screens/login_screen.dart';
+import 'package:meal_analyzer/ui/screens/signup_screen.dart';
 import 'data/models/meal_result.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/history_screen.dart';
 import 'core/theme.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'ui/screens/auth_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +18,9 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(MealResultAdapter());
   await Hive.openBox<MealResult>('meal_history');
-
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(
     // ProviderScope wraps the entire app — required for Riverpod
     const ProviderScope(
@@ -29,10 +36,12 @@ class MealAnalyzerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Meal Analyzer',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       home: const HomeScreen(),
       routes: {
         '/history': (_) => const HistoryScreen(),
+        '/signup': (_) => const SignupScreen(),
       },
     );
   }

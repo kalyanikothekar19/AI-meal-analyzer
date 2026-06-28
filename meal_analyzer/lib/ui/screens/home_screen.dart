@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:meal_analyzer/data/services/auth_service.dart';
 
 import '../../core/constants.dart';
 import '../../core/theme.dart';
@@ -11,7 +12,10 @@ import '../widgets/nutrition_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
+    void _logout(){
+        final auth =AuthService();
+        auth.signOut();
+      }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch state — rebuilds whenever analysis state or image changes
@@ -24,10 +28,15 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text(AppConstants.appName),
         actions: [
-          IconButton(
+           IconButton(
             tooltip: 'History',
             icon: const Icon(Icons.history_rounded),
             onPressed: () => Navigator.pushNamed(context, '/history'),
+          ),
+          IconButton(
+            tooltip: 'Log Out',
+            icon: const Icon(Icons.logout),
+            onPressed: () => _logout(),
           ),
         ],
       ),
@@ -71,6 +80,7 @@ class HomeScreen extends ConsumerWidget {
                       ? Image.file(selectedImage, fit: BoxFit.cover)
                       : const _EmptyImagePlaceholder(),
                 ),
+                
               ),
             ),
 
