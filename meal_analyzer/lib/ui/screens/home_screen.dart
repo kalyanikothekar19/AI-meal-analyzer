@@ -12,9 +12,9 @@ import '../widgets/nutrition_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-    void _logout(){
+    void _logout() async{
         final auth =AuthService();
-        auth.signOut();
+       await auth.signOut();
       }
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Log Out',
             icon: const Icon(Icons.logout),
-            onPressed: () => _logout(),
+            onPressed: () => _logout,
           ),
         ],
       ),
