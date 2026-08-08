@@ -63,4 +63,36 @@ class FirestoreService {
       await doc.reference.delete();
     }
   }
+
+  Future<void> saveDailyReport({
+    required DateTime date,
+    required int totalCalories,
+    required double totalProtein,
+    required double totalCarbs,
+    required double totalFat,
+    required int mealCount,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    print('Saving daily report for user: $uid on date: $date');
+    if (uid == null) throw Exception('No logged-in user');
+
+    final dateId =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+    await FirebaseFirestore.instance
+        .collection('user')
+        .doc(uid)
+        .collection('reports')
+        .doc(
+            dateId) // one doc per day, so re-saving the same day just updates it
+        .set({
+      'date': dateId,
+      'totalCalories': totalCalories,
+      'totalProtein': totalProtein,
+      'totalCarbs': totalCarbs,
+      'totalFat': totalFat,
+      'mealCount': mealCount,
+      'generatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
 }

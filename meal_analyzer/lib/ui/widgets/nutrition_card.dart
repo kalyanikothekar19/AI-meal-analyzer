@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:meal_analyzer/core/theme.dart';
+import 'package:meal_analyzer/ui/widgets/recipe_carousel_sheet.dart';
 import '../../data/models/meal_result.dart';
 import 'macro_bar.dart';
 
@@ -38,7 +40,8 @@ class NutritionCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50),
                   borderRadius: BorderRadius.circular(20),
@@ -57,11 +60,23 @@ class NutritionCard extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Macro bars
-          MacroBar(label: 'Protein', value: meal.protein, color: const Color(0xFF2196F3), unit: 'g'),
+          MacroBar(
+              label: 'Protein',
+              value: meal.protein,
+              color: const Color(0xFF2196F3),
+              unit: 'g'),
           const SizedBox(height: 10),
-          MacroBar(label: 'Carbs', value: meal.carbs, color: const Color(0xFFFF9800), unit: 'g'),
+          MacroBar(
+              label: 'Carbs',
+              value: meal.carbs,
+              color: const Color(0xFFFF9800),
+              unit: 'g'),
           const SizedBox(height: 10),
-          MacroBar(label: 'Fat', value: meal.fat, color: const Color(0xFFF44336), unit: 'g'),
+          MacroBar(
+              label: 'Fat',
+              value: meal.fat,
+              color: const Color(0xFFF44336),
+              unit: 'g'),
 
           const SizedBox(height: 20),
 
@@ -86,6 +101,31 @@ class NutritionCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => RecipeCarouselSheet(
+                      foodName: meal.mealName), // adjust field name if needed
+                );
+              },
+              icon: const Icon(Icons.restaurant_menu_rounded, size: 18),
+              label: const Text('View Recipes with this Food'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primary,
+                side: BorderSide(color: AppTheme.primary.withOpacity(0.4)),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ),
         ],

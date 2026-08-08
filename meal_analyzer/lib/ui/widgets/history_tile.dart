@@ -41,7 +41,8 @@ class HistoryTile extends StatelessWidget {
             // ── Info ───────────────────────────────────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -64,28 +65,35 @@ class HistoryTile extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     // Macro badges row
-                    Row(
-                      children: [
-                        _MacroBadge(
-                          label: '${meal.calories} kcal',
-                          color: AppTheme.primaryLight,
-                        ),
-                        const SizedBox(width: 6),
-                        _MacroBadge(
-                          label: '${meal.protein.toStringAsFixed(0)}g P',
-                          color: AppTheme.proteinColor,
-                        ),
-                        const SizedBox(width: 6),
-                        _MacroBadge(
-                          label: '${meal.carbs.toStringAsFixed(0)}g C',
-                          color: AppTheme.carbsColor,
-                        ),
-                        const SizedBox(width: 6),
-                        _MacroBadge(
-                          label: '${meal.fat.toStringAsFixed(0)}g F',
-                          color: AppTheme.fatColor,
-                        ),
-                      ],
+                    // Macro badges row — scrollable so it never overflows on narrow screens
+                    SizedBox(
+                      height:
+                          26, // match your badge height so it doesn't add extra vertical space
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const ClampingScrollPhysics(),
+                        children: [
+                          _MacroBadge(
+                            label: '${meal.calories} kcal',
+                            color: AppTheme.primaryLight,
+                          ),
+                          const SizedBox(width: 6),
+                          _MacroBadge(
+                            label: '${meal.protein.toStringAsFixed(0)}g P',
+                            color: AppTheme.proteinColor,
+                          ),
+                          const SizedBox(width: 6),
+                          _MacroBadge(
+                            label: '${meal.carbs.toStringAsFixed(0)}g C',
+                            color: AppTheme.carbsColor,
+                          ),
+                          const SizedBox(width: 6),
+                          _MacroBadge(
+                            label: '${meal.fat.toStringAsFixed(0)}g F',
+                            color: AppTheme.fatColor,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -159,8 +167,18 @@ class HistoryTile extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');

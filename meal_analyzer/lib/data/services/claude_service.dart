@@ -84,24 +84,35 @@ import '../../core/constants.dart';
 
 class ClaudeService {
   static const _apiUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
   Future<MealResult> analyzeMeal(File imageFile) async {
     final bytes = await imageFile.readAsBytes();
     final base64Image = base64Encode(bytes);
 
     const prompt = '''
-Analyze this food image and respond ONLY with a valid JSON object.
-No extra text, no markdown, just raw JSON.
+Analyze this image and respond ONLY with a valid JSON object. No extra text, no markdown, no explanations — just raw JSON.
 
-Format:
+If the image contains food, use this format:
 {
+  "is_food": true,
   "meal_name": "string",
   "calories": integer,
   "protein_g": float,
   "carbs_g": float,
   "fat_g": float,
   "health_tip": "one helpful sentence"
+}
+
+If the image does NOT contain identifiable food (e.g. objects, people, animals, blurry/unclear images), respond with:
+{
+  "is_food": false,
+  "meal_name": "Not a food item",
+  "calories": 0,
+  "protein_g": 0,
+  "carbs_g": 0,
+  "fat_g": 0,
+  "health_tip": "Please take a clearer photo of a meal or food item."
 }
 ''';
 
@@ -125,7 +136,10 @@ Format:
           }
         ],
         'generationConfig': {
-          'maxOutputTokens': 500,
+          'maxOutputTokens': 1024,
+          'thinkingConfig': {
+            'thinkingBudget': 0,
+          },
         }
       }),
     );
@@ -135,8 +149,22 @@ Format:
     }
 
     final decoded = jsonDecode(response.body);
-    final rawText =
-        decoded['candidates'][0]['content']['parts'][0]['text'] as String;
+
+    final candidates = decoded['candidates'] as List?;
+    if (candidates == null || candidates.isEmpty) {
+      throw Exception(
+          'No response from Gemini — possibly blocked. Raw: ${response.body}');
+    }
+
+    final finishReason = candidates[0]['finishReason'];
+    final parts = candidates[0]['content']?['parts'] as List?;
+
+    if (parts == null || parts.isEmpty) {
+      throw Exception(
+          'Gemini returned no content (finishReason: $finishReason). Try a clearer image.');
+    }
+
+    final rawText = parts[0]['text'] as String;
 
     final cleanText = rawText
         .replaceAll(RegExp(r'```json', caseSensitive: false), '')
@@ -146,11 +174,17 @@ Format:
 // Try to extract JSON even if there's surrounding text
     final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanText);
     if (jsonMatch == null) {
+      print('RAW GEMINI RESPONSE: $cleanText'); // debug only
       throw Exception('No food detected or invalid response from AI.');
     }
 
     final nutritionJson =
         jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
+
+    if (nutritionJson['is_food'] == false) {
+      throw Exception(nutritionJson['health_tip'] ?? 'Not a food image.');
+    }
+
     return MealResult.fromJson(nutritionJson, imageFile.path);
   }
 }

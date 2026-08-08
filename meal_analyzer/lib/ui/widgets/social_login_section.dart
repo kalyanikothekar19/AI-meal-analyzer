@@ -84,7 +84,7 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _pressController;
   bool _isLoading = false;
-  final auth= AuthService();
+  final auth = AuthService();
   @override
   void initState() {
     super.initState();
@@ -108,21 +108,19 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton>
     setState(() => _isLoading = true);
 
     try {
-      if (kIsWeb) {
-        await auth.signInwithGoogleWeb();
-      }else{
-      await auth.signInWithGoogle();
+      // if (kIsWeb) {
+      //   await auth.signInwithGoogleWeb();
+      // }else
+      {
+        await auth.signInWithGoogle();
       }
-      
     } on FirebaseAuthException catch (e) {
       // Catches Firebase-specific errors
       print("Firebase Error: ${e.message}");
-      
     } catch (e) {
       // 🚨 THIS IS THE MISSING PIECE! 🚨
       // This catches the "user closed the window" error (PlatformException)
       print("Sign-in canceled or failed: $e");
-      
     } finally {
       // 3. Stop loading ALWAYS
       if (mounted) {
