@@ -190,13 +190,11 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // ✨ Meal & Health Themed Background Wallpaper
-          CustomPaint(
-            painter: _MealHealthBackgroundPainter(),
-            child: Container(),
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _MealHealthBackgroundPainter(),
+            ),
           ),
-
-          // Main Content
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),

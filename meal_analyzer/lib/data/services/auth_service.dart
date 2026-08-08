@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   // Stream to listen to auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
@@ -48,6 +49,16 @@ class AuthService {
     );
 
     return await _auth.signInWithCredential(credential);
+  }
+
+  Future<void> createUserProfile(
+      String uid, Map<String, dynamic> userData) async {
+    try {
+      // We use the Auth UID as the document ID so we can easily find the user later
+      await _db.collection('user').doc(uid).set(userData);
+    } catch (e) {
+      throw Exception('Failed to create user profile: $e');
+    }
   }
 
   // ── Sign Out ──────────────────────────────────────
